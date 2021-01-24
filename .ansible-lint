@@ -1,0 +1,5 @@
+---
+mock_roles:
+  - 'kewlfft.aur'
+mock_modules:
+  - 'aur'

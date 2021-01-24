@@ -1,0 +1,4 @@
+---
+base_kernel_packages:
+  - '{{ base_kernel }}'
+  - '{{ base_kernel }}-firmware'

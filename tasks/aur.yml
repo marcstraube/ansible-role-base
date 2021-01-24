@@ -1,0 +1,64 @@
+---
+- name: 'Create AUR build user: {{ aur_build_user }}'
+  ansible.builtin.user:
+    name: '{{ aur_build_user }}'
+    group: 'wheel'
+    system: 'yes'
+  when: 'aur_build_user == "aur_builder"'
+
+- name: 'Allow password-less execution of pacman for {{ aur_build_user }}'
+  ansible.builtin.lineinfile:
+    path: '/etc/sudoers.d/11-aur_builder'
+    line: '{{ aur_build_user }} ALL=(ALL) NOPASSWD: /usr/bin/pacman'
+    create: true
+    owner: 'root'
+    group: 'root'
+    mode: '0400'
+    validate: 'visudo -cf %s'
+
+- name: 'Ensure packager is set'
+  ansible.builtin.lineinfile:
+    dest: '/etc/makepkg.conf'
+    regexp: '^#?PACKAGER'
+    line: 'PACKAGER="{{ base_aur_packager }}"'
+  when: 'base_aur_packager'
+
+- name: 'Ensure packager GPG key is set'
+  ansible.builtin.lineinfile:
+    dest: '/etc/makepkg.conf'
+    regexp: '^#?GPGKEY'
+    line: 'GPGKEY="{{ base_aur_gpg_key }}"'
+  when: 'base_aur_gpg_key'
+
+- name: 'Ensure all cores are used when compressing packages'
+  ansible.builtin.lineinfile:
+    dest: '/etc/makepkg.conf'
+    regexp: '{{ item.regexp }}'
+    line: '{{ item.line }}'
+  loop:
+    - regexp: '^COMPRESSXZ'
+      line: 'COMPRESSXZ=(xz -c -z - --threads=0)'
+    - regexp: '^COMPRESSZST'
+      line: 'COMPRESSZST=(zstd -c -z -q - --threads=0)'
+
+- name: 'Ensure AUR dependencies are installed'
+  community.general.pacman:
+    name:
+      - 'base-devel'
+      - 'git'
+    state: 'present'
+
+- name: 'Ensure {{ base_aur_helper }} is installed as AUR helper'
+  become_user: '{{ aur_build_user }}'
+  aur:
+    name: '{{ base_aur_helper }}'
+    state: 'present'
+
+- name: 'Ensure AUR dev tools are installed'
+  become_user: '{{ aur_build_user }}'
+  aur:
+    name:
+      - 'aurpublish'
+      - 'devtools'
+    state: 'present'
+  when: 'base_aur_dev_tools'

@@ -1,0 +1,75 @@
+---
+- name: 'Install pacman configuration'
+  ansible.builtin.template:
+    src: 'pacman.conf.j2'
+    dest: '/etc/pacman.conf'
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+  notify: 'update pacman cache'
+
+- name: 'Ensure Reflector is installed'
+  community.general.pacman:
+    name: 'reflector'
+    state: 'present'
+
+- name: 'Install Reflector configuration'
+  ansible.builtin.template:
+    src: 'reflector.conf.j2'
+    dest: '/etc/xdg/reflector/reflector.conf'
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+  notify: 'update pacman cache'
+
+- name: 'Ensure Reflector timer is enabled'
+  ansible.builtin.systemd:
+    name: 'reflector.timer'
+    enabled: true
+  notify: 'update pacman cache'
+
+- name: 'Flush handlers'
+  ansible.builtin.meta: 'flush_handlers'
+
+- name: 'Ensure pacman-contrib is installed'
+  community.general.pacman:
+    name: 'pacman-contrib'
+    state: 'present'
+
+- name: 'Ensure paccache.timer exists'
+  ansible.builtin.copy:
+    src: 'paccache.timer'
+    dest: '/etc/systemd/system/paccache.timer'
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+
+- name: 'Ensure paccache.timer is enabled'
+  ansible.builtin.systemd:
+    name: 'paccache.timer'
+    enabled: true
+    state: 'started'
+
+- name: 'Ensure pacman hooks directory exists'
+  ansible.builtin.file:
+    path: '/etc/pacman.d/hooks'
+    state: 'directory'
+    owner: 'root'
+    group: 'root'
+    mode: '0755'
+
+- name: 'Ensure custom repository GPG keys are imported'
+  ansible.builtin.command: 'pacman-key --recv-keys {{ item.key_id }}'
+  loop: '{{ base_custom_repositories }}'
+  when: 'item.key_id is defined'
+  register: 'recv_keys_result'
+  changed_when:
+    - '"imported: 1" in recv_keys_result.stderr'
+
+- name: 'Ensure custom repository GPG keys are signed'
+  ansible.builtin.command: 'pacman-key --lsign-key {{ item.key_id }}'
+  loop: '{{ base_custom_repositories }}'
+  when: 'item.key_id is defined'
+  register: 'lsign_key_result'
+  changed_when:
+    - '"depth: 0" in lsign_key_result.stderr'

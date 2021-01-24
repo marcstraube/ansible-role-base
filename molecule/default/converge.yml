@@ -1,0 +1,10 @@
+---
+- name: 'Converge'
+  hosts: 'all'
+  gather_facts: false
+  become: true
+  vars:
+    base_aur_helper: 'yay'  # We use yay in molecule because building paru let molecule throw an overflow error
+  roles:
+    - 'kewlfft.aur'
+    - 'marcstraube.base'

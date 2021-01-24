@@ -1,0 +1,32 @@
+---
+base_enable_multilib: true
+base_custom_repositories: []
+base_mirrors_countries: []
+base_mirrors_sort: 'rate'
+
+aur_build_user: 'aur_builder'
+base_aur_helper: 'paru'
+base_aur_packager: ''
+base_aur_gpg_key: ''
+base_aur_dev_tools: true
+
+base_kernel: 'linux'
+base_packages:
+  - 'bash-completion'
+  - 'hdparm'
+  - 'htop'
+  - 'iproute2'
+  - 'man-db'
+  - 'man-pages'
+  - 'mlocate'
+  - 'multitail'
+  - 'neovim'
+  - 'pkgfile'
+  - 'texinfo'
+  - 'tmux'
+  - 'wget'
+  - 'vifm'
+base_aur_packages:
+  - 'ancient-packages'
+  - 'aurvote'
+  - 'nvimpager-git'

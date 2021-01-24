@@ -1,0 +1,9 @@
+[Unit]
+Description=Remove unused cached package files
+
+[Timer]
+OnCalendar=weekly
+Persistent=true
+
+[Install]
+WantedBy=multi-user.target

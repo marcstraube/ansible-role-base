@@ -1,0 +1,33 @@
+---
+- name: 'Update complete system'
+  community.general.pacman:
+    update_cache: true
+    upgrade: true
+
+- name: 'Import pacman tasks'
+  ansible.builtin.import_tasks: 'pacman.yml'
+
+- name: 'Ensure sudo is configured'
+  ansible.builtin.copy:
+    src: 'sudoers'
+    dest: '/etc/sudoers'
+    owner: 'root'
+    group: 'root'
+    mode: '0440'
+    validate: '/usr/sbin/visudo -cf %s'
+
+- name: 'Import AUR tasks'
+  ansible.builtin.import_tasks: 'aur.yml'
+
+- name: 'Ensure basic system packages are installed'
+  community.general.pacman:
+    name: '{{ base_kernel_packages + base_packages }}'
+    state: 'present'
+  retries: 5
+
+- name: 'Ensure basic AUR packages are installed'
+  become_user: '{{ aur_build_user }}'
+  aur:
+    name: '{{ base_aur_packages }}'
+    state: 'present'
+  retries: 5
